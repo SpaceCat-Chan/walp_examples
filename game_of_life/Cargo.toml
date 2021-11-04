@@ -1,0 +1,12 @@
+[package]
+name = "wasm_gol_lua"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+walp_rs = {path = "../walp/common_bindings/rust"}
