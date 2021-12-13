@@ -35,4 +35,4 @@ bindings(module)
 
 walp.instantiate(module)
 
-module.EXPORTS.main.call()
+module.EXPORTS.amain.call()

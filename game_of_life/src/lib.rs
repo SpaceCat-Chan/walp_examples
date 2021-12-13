@@ -1,6 +1,4 @@
 extern "C" {
-    fn print_u64(n: u64);
-    fn passthrough(n: f64) -> f64;
     fn i_take_a_break();
 }
 
@@ -17,7 +15,7 @@ fn my_custom_panic_hook(info: &std::panic::PanicInfo) {
 }
 
 #[no_mangle]
-pub extern "C" fn main() {
+pub extern "C" fn amain() {
     std::panic::set_hook(Box::new(my_custom_panic_hook));
     walp_println!("Hello from Rust!");
     let mut u = Universe::new();
