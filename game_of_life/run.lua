@@ -1,6 +1,6 @@
 -- simulate that we are outside the walp folder
 -- i certainly hope the walp folder is named "walp"
-package.path = "../?.lua;"..package.path
+package.path = "../?.lua;" .. package.path
 
 --[[
     this program runs 100 iterations of The Game of Life on a 16x16 looping grid
@@ -12,9 +12,6 @@ local walp = require("walp.main")
 local bindings = require("walp.common_bindings.lua_impl")
 
 local module = walp.parse("target/wasm32-unknown-unknown/release/wasm_gol_lua.wasm", true)
-
--- .debug_info section is big, remove it before instantiation
-module.custom_sections = {}
 
 math.randomseed(os.time())
 
