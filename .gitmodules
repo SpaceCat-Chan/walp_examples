@@ -1,3 +1,4 @@
 [submodule "walp"]
 	path = walp
 	url = https://github.com/SpaceCat-Chan/walp.git
+	branch = master
