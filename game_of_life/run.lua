@@ -11,7 +11,12 @@ WALP_DEBUG_PARSE_MODULE_FILEPATH = "../walp/debug_parser/target/wasm32-unknown-u
 local walp = require("walp.main")
 local bindings = require("walp.common_bindings.lua_impl")
 
-local module = walp.parse("target/wasm32-unknown-unknown/release/wasm_gol_lua.wasm", true)
+local module, err = walp.parse("target/wasm32-unknown-unknown/release/wasm_gol_lua.wasm", true)
+
+if module == nil then
+    print(err)
+    return
+end
 
 math.randomseed(os.time())
 
