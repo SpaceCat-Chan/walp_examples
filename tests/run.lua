@@ -32,15 +32,21 @@ local function run_tests(tests)
             end
         end
         if should_do_test then
-            local success, message = test.run()
-            if success then
+            if test.meta_test then
                 passed_tests[test.name] = true
-                passed_test_count = passed_test_count + 1
             else
-                table.insert(failed_tests, { test = test, message = message })
+                local success, message = test.run()
+                if success then
+                    passed_tests[test.name] = true
+                    passed_test_count = passed_test_count + 1
+                else
+                    table.insert(failed_tests, { test = test, message = message })
+                end
             end
         else
-            ignored_test_count = ignored_test_count + 1
+            if not test.meta_test then
+                ignored_test_count = ignored_test_count + 1
+            end
         end
     end
     if ignored_test_count == 1 then
@@ -65,11 +71,37 @@ end
 
 local tests = {
     {
-        name = "local.get",
+        name = "local.get i32",
         run = function()
-            local res = module.EXPORTS.local_get.call(true, 123456)
+            local res = module.EXPORTS.local_get_i32.call(true, 123456)
             return res == 123456, ("got: %i, expected: 123456"):format(res)
         end
+    },
+    {
+        name = "local.get i64",
+        run = function()
+            local res = module.EXPORTS.local_get_i64.call(true, 0x21000B3A7396492EULL)
+            return res == 0x21000B3A7396492EULL, ("got: %i, expected: 0x21000B3A7396492E"):format(res)
+        end
+    },
+    {
+        name = "local.get f32",
+        run = function()
+            local res = module.EXPORTS.local_get_f32.call(true, 123.55)
+            return res == 123.55, ("got: %f, expected: 123.55"):format(res)
+        end
+    },
+    {
+        name = "local.get f64",
+        run = function()
+            local res = module.EXPORTS.local_get_f64.call(true, 123.55)
+            return res == 123.55, ("got: %f, expected: 123.55"):format(res)
+        end
+    },
+    {
+        name = "local.get",
+        meta_test = true,
+        relies_on = { "local.get i32", "local.get i64", "local.get f32", "local.get f64" }
     },
     {
         name = "i32.const",
@@ -77,6 +109,32 @@ local tests = {
             local res = module.EXPORTS.i32_const.call(true)
             return res == 143723548, ("got: %i, expected: 143723548"):format(res)
         end
+    },
+    {
+        name = "i64.const",
+        run = function()
+            local val = module.EXPORTS.i64_const.call(true)
+            return val == 0xFEDCBA9876543210ULL, ("got 0x%X, expected 0xFEDCBA9876543210"):format(val)
+        end
+    },
+    {
+        name = "f32.const",
+        run = function()
+            local res = module.EXPORTS.f32_const.call(true)
+            return res == 123.5, ("got: %f, expected: 123.5"):format(res)
+        end
+    },
+    {
+        name = "f64.const",
+        run = function()
+            local res = module.EXPORTS.f64_const.call(true)
+            return res == 123.564, ("got: %f, expected: 123.564"):format(res)
+        end
+    },
+    {
+        name = "const",
+        meta_test = true,
+        relies_on = { "i32.const", "i64.const", "f32.const", "f64.const" }
     },
     {
         name = "i64.load",
@@ -107,7 +165,7 @@ local tests = {
     },
     {
         name = "i32.add const",
-        relies_on = { "i32.const" },
+        relies_on = { "const" },
         run = function()
             local added = module.EXPORTS.i32_add_const.call(true)
             return added == 143723548, string.format("got: %i, expected: 143723548", added)
@@ -132,10 +190,22 @@ local tests = {
         end
     },
     {
-        name = "i64.const",
+        name = "call_indirect",
+        relies_on = { "const" },
         run = function()
-            local val = module.EXPORTS.i64_const.call(true)
-            return val == 0xFEDCBA9876543210ULL, ("got 0x%X, expected 0xFEDCBA9876543210"):format(val)
+            local val = module.EXPORTS.call_indirect_test.call(true, 0)
+            if val ~= 0 then
+                return false, ("tried to call 0, ended up calling %i instead"):format(val)
+            end
+            local val = module.EXPORTS.call_indirect_test.call(true, 1)
+            if val ~= 1 then
+                return false, ("tried to call 1, ended up calling %i instead"):format(val)
+            end
+            local val = module.EXPORTS.call_indirect_test.call(true, 2)
+            if val ~= 2 then
+                return false, ("tried to call 2, ended up calling %i instead"):format(val)
+            end
+            return true
         end
     }
 }
