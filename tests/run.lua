@@ -18,6 +18,7 @@ module.IMPORTS = {
 
 
 walp.instantiate(module)
+module.compile_settings.use_magic_bytecode_jit = true
 
 local function run_tests(tests)
     local passed_tests = {}
@@ -73,28 +74,28 @@ local tests = {
     {
         name = "local.get i32",
         run = function()
-            local res = module.EXPORTS.local_get_i32.call(true, 123456)
+            local res = module.EXPORTS.local_get_i32.call(123456)
             return res == 123456, ("got: %i, expected: 123456"):format(res)
         end
     },
     {
         name = "local.get i64",
         run = function()
-            local res = module.EXPORTS.local_get_i64.call(true, 0x21000B3A7396492EULL)
+            local res = module.EXPORTS.local_get_i64.call(0x21000B3A7396492EULL)
             return res == 0x21000B3A7396492EULL, ("got: %i, expected: 0x21000B3A7396492E"):format(res)
         end
     },
     {
         name = "local.get f32",
         run = function()
-            local res = module.EXPORTS.local_get_f32.call(true, 123.55)
+            local res = module.EXPORTS.local_get_f32.call(123.55)
             return res == 123.55, ("got: %f, expected: 123.55"):format(res)
         end
     },
     {
         name = "local.get f64",
         run = function()
-            local res = module.EXPORTS.local_get_f64.call(true, 123.55)
+            local res = module.EXPORTS.local_get_f64.call(123.55)
             return res == 123.55, ("got: %f, expected: 123.55"):format(res)
         end
     },
@@ -106,28 +107,28 @@ local tests = {
     {
         name = "i32.const",
         run = function()
-            local res = module.EXPORTS.i32_const.call(true)
+            local res = module.EXPORTS.i32_const.call()
             return res == 143723548, ("got: %i, expected: 143723548"):format(res)
         end
     },
     {
         name = "i64.const",
         run = function()
-            local val = module.EXPORTS.i64_const.call(true)
+            local val = module.EXPORTS.i64_const.call()
             return val == 0xFEDCBA9876543210ULL, ("got 0x%X, expected 0xFEDCBA9876543210"):format(val)
         end
     },
     {
         name = "f32.const",
         run = function()
-            local res = module.EXPORTS.f32_const.call(true)
+            local res = module.EXPORTS.f32_const.call()
             return res == 123.5, ("got: %f, expected: 123.5"):format(res)
         end
     },
     {
         name = "f64.const",
         run = function()
-            local res = module.EXPORTS.f64_const.call(true)
+            local res = module.EXPORTS.f64_const.call()
             return res == 123.564, ("got: %f, expected: 123.564"):format(res)
         end
     },
@@ -141,7 +142,7 @@ local tests = {
         relies_on = { "local.get" },
         run = function()
             module.EXPORTS.memory.write64(1, { l = 0x08040201, h = 0x80402010 })
-            local loaded = module.EXPORTS.i64_load.call(true, 1)
+            local loaded = module.EXPORTS.i64_load.call(1)
             return loaded == 0x8040201008040201ULL,
                 string.format("loaded: 0x%X, expected: 0x8040201008040201", loaded)
         end
@@ -150,16 +151,35 @@ local tests = {
         name = "i64.store",
         relies_on = { "i64.load" },
         run = function()
-            module.EXPORTS.i64_store.call(true, 1, 0xFF7F3F1F0F070301ULL)
-            local stored = module.EXPORTS.i64_load.call(true, 1)
+            module.EXPORTS.i64_store.call(1, 0xFF7F3F1F0F070301ULL)
+            local stored = module.EXPORTS.i64_load.call(1)
             return stored == 0xFF7F3F1F0F070301ULL, string.format("stored: 0x%X, expected: 0xFF7F3F1F0F070301", stored)
+        end
+    },
+    {
+        name = "i32.load",
+        relies_on = { "local.get" },
+        run = function()
+            module.EXPORTS.memory.write32(1, 0xDEADBEEF)
+            local loaded = module.EXPORTS.i32_load.call(1)
+            return loaded == 0xDEADBEEF,
+                string.format("loaded: 0x%X, expected: 0xDEADBEEF", loaded)
+        end
+    },
+    {
+        name = "i32.store",
+        relies_on = { "i32.load" },
+        run = function()
+            module.EXPORTS.i32_store.call(2, 0x7E57C0DE)
+            local stored = module.EXPORTS.i32_load.call(2)
+            return stored == 0x7E57C0DE, string.format("stored: 0x%X, expected: 0x7E57C0DE", stored)
         end
     },
     {
         name = "i32.add param",
         relies_on = { "local.get" },
         run = function()
-            local added = module.EXPORTS.i32_add_param.call(true, 654321, 77775)
+            local added = module.EXPORTS.i32_add_param.call(654321, 77775)
             return added == 654321 + 77775, string.format("got: %i, expected: 732096", added)
         end
     },
@@ -167,7 +187,7 @@ local tests = {
         name = "i32.add const",
         relies_on = { "const" },
         run = function()
-            local added = module.EXPORTS.i32_add_const.call(true)
+            local added = module.EXPORTS.i32_add_const.call()
             return added == 143723548, string.format("got: %i, expected: 143723548", added)
         end
     },
@@ -175,7 +195,7 @@ local tests = {
         name = "global.set",
         relies_on = { "local.get" },
         run = function()
-            module.EXPORTS.global_set.call(true, 74368345)
+            module.EXPORTS.global_set.call(74368345)
             local val = module.EXPORTS.global.get()
             return val == 74368345, ("global was set to %i, expected 74368345"):format(val)
         end
@@ -184,8 +204,8 @@ local tests = {
         name = "global.get",
         relies_on = { "global.set" },
         run = function()
-            module.EXPORTS.global_set.call(true, 65258)
-            local val = module.EXPORTS.global_get.call(true)
+            module.EXPORTS.global_set.call(65258)
+            local val = module.EXPORTS.global_get.call()
             return val == 65258, ("got %i, expected 65258"):format(val)
         end
     },
@@ -193,19 +213,45 @@ local tests = {
         name = "call_indirect",
         relies_on = { "const" },
         run = function()
-            local val = module.EXPORTS.call_indirect_test.call(true, 0)
+            local val = module.EXPORTS.call_indirect_test.call(0)
             if val ~= 0 then
                 return false, ("tried to call 0, ended up calling %i instead"):format(val)
             end
-            local val = module.EXPORTS.call_indirect_test.call(true, 1)
+            local val = module.EXPORTS.call_indirect_test.call(1)
             if val ~= 1 then
                 return false, ("tried to call 1, ended up calling %i instead"):format(val)
             end
-            local val = module.EXPORTS.call_indirect_test.call(true, 2)
+            local val = module.EXPORTS.call_indirect_test.call(2)
             if val ~= 2 then
                 return false, ("tried to call 2, ended up calling %i instead"):format(val)
             end
             return true
+        end
+    },
+    {
+        name = "memory.grow",
+        relies_on = { "local.get" },
+        run = function()
+            local size = #module.store.mems[1].data / 65536
+            local reported_size = module.EXPORTS.memory_grow.call(2)
+            if size ~= reported_size then
+                return false, ("expected reported size to be %i, got %i"):format(size, reported_size)
+            end
+            local new_size = #module.store.mems[1].data / 65536
+            if size + 2 ~= new_size then
+                return false,
+                    ("expected memory to be grown by two pages, was grown by %f pages"):format(new_size - size)
+            end
+            return true
+        end
+    },
+    {
+        name = "memory.grow fail",
+        relies_on = { "local.get" },
+        run = function()
+            local reported_size = module.EXPORTS.memory_grow.call(10)
+            return reported_size == 0xFFFFFFFF,
+                ("expected grow by 10 pages to fail with 0xFFFFFFFF, got 0x%X"):format(reported_size)
         end
     }
 }

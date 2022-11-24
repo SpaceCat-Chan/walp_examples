@@ -10,6 +10,17 @@
     local.get $p1
     i64.store
   )
+  (export "i32_load" (func $i32_load))
+  (func $i32_load (param $p0 i32) (result i32)
+    local.get $p0
+    i32.load
+  )
+  (export "i32_store" (func $i32_store))
+  (func $i32_store (param $p0 i32) (param $p1 i32)
+    local.get $p0
+    local.get $p1
+    i32.store
+  )
   (export "local_get_i32" (func $local_get_i32))
   (func $local_get_i32 (param $p0 i32) (result i32)
     local.get $p0
@@ -79,7 +90,12 @@
     call_indirect (type $call_indirect_target_type)
     return
   )
-  (memory $memory 1)
+  (export "memory_grow" (func $memory_grow))
+  (func $memory_grow (param $amount_to_grow i32) (result i32)
+    local.get $amount_to_grow
+    memory.grow
+  )
+  (memory $memory 1 7)
   (export "memory" (memory 0))
   (global $global (mut i32) (i32.const 0))
   (export "global" (global $global))

@@ -39,4 +39,8 @@ bindings(module)
 
 walp.instantiate(module)
 
+local should_compile = (args or { ... })[1] == "compile"
+
+module.compile_settings.use_magic_bytecode_jit = should_compile
+
 module.EXPORTS.amain.call()

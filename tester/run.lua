@@ -11,7 +11,7 @@ WALP_DEBUG_PARSE_MODULE_FILEPATH = "../walp/debug_parser/target/wasm32-unknown-u
 local walp = require("walp.main")
 local bindings = require("walp.common_bindings.lua_impl")
 
-local module, err = walp.parse("target/wasm32-unknown-unknown/debug/tester.wasm", true)
+local module, err = walp.parse("target/wasm32-unknown-unknown/release/tester.wasm", true)
 
 if module == nil then
     print(err)
@@ -34,4 +34,5 @@ bindings(module)
 
 walp.instantiate(module)
 
-module.EXPORTS.amain.call(true)
+module.compile_settings.use_magic_bytecode_jit = true
+module.EXPORTS.amain.call()
