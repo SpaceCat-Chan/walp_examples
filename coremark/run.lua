@@ -9,6 +9,8 @@ WALP_DEBUG_PARSE_MODULE_FILEPATH = "../walp/debug_parser/target/wasm32-unknown-u
 
 local walp = require("walp.main")
 
+local bit = require("walp.bitops")
+
 local module, err = walp.parse("coremark-minimal.wasm", true)
 
 if module == nil then
@@ -19,7 +21,11 @@ end
 module.IMPORTS = {
     env = {
         clock_ms = function()
-            return math.floor(os.clock() * 1000)
+            if module.compile_settings.use_magic_bytecode_jit then
+                return bit.to_u64(math.floor(os.clock() * 1000))
+            else
+                return {h = 0, l = math.floor(os.clock() * 1000)}
+            end
         end
     }
 }
@@ -27,4 +33,7 @@ module.IMPORTS = {
 
 walp.instantiate(module)
 
-module.EXPORTS.run.call()
+local should_compile = (args or { ... })[1] == "compile"
+module.compile_settings.use_magic_bytecode_jit = should_compile
+
+print(module.EXPORTS.run.call())
